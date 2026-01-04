@@ -6,6 +6,7 @@
   "engines": {
     "vscode": "^1.107.0"
   },
+  "type": "module",
   "categories": [
     "Other"
   ],
@@ -14,10 +15,37 @@
   "contributes": {
     "commands": [
       {
+        "command": "gitx.openPanel",
+        "title": "GitX: Open Panel"
+      },
+      {
         "command": "gitx.helloWorld",
         "title": "Hello World"
+      },
+      {
+        "command": "gitx.revealView",
+        "title": "GitX: Reveal Panel"
       }
-    ]
+    ],
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "gitxPanel",
+          "title": "GitX",
+          "icon": "$(git-branch)"
+        }
+      ]
+    },
+    "views": {
+      "gitxPanel": [
+        {
+          "id": "gitx.view",
+          "name": "GitX",
+          "type": "webview",
+          "icon": ""
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "pnpm run compile",
