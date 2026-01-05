@@ -1,7 +1,6 @@
-# gitx README
+# GitX
 
-This is the README for your extension "gitx". After writing up a brief description, we recommend including the following
-sections.
+GitX 是一款在 VS Code 面板中提供 JetBrains 风格 Git 体验的扩展。它通过 Webview（Vue 3）实现统一的 Git 面板，包含操作按钮、分支列表、提交列表与详情区块。
 
 ## Features
 
@@ -58,20 +57,11 @@ Ensure that you've read through the extensions guidelines and follow the best pr
 
 - [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
 
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-- Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-- Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-- Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
 ## For more information
 
 - [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
 - [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
 
-**Enjoy!**
 
 ## Development notes 🚧
 
