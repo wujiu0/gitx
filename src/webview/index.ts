@@ -1,7 +1,6 @@
-import * as fs from 'fs';
-import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { getUri } from '../utils/index.js';
+
 export class GitXViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'gitx.view';
 
@@ -28,9 +27,6 @@ export class GitXViewProvider implements vscode.WebviewViewProvider {
 }
 
 function getWebviewContent(ctx: vscode.ExtensionContext, webview: vscode.Webview): string {
-  const distPath = path.join(ctx.extensionPath, 'src', 'webview', 'build');
-  const distIndex = path.join(distPath, 'index.html');
-
   const stylesUri = getUri(webview, ctx.extensionUri, ['src', 'webview', 'build', 'assets', 'index.css']);
   // The JS file from the Vue build output
   const scriptUri = getUri(webview, ctx.extensionUri, ['src', 'webview', 'build', 'assets', 'index.js']);
@@ -56,10 +52,6 @@ function getWebviewContent(ctx: vscode.ExtensionContext, webview: vscode.Webview
 </html>
 `;
   }
-
-  let html = fs.readFileSync(distIndex, 'utf8');
-  html = html.replace('/assets/index.js', scriptUri.toString());
-  html = html.replace('/assets/index.css', stylesUri.toString());
 
   return `<!DOCTYPE html>
 <html lang="">
