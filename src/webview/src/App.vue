@@ -58,8 +58,8 @@ const commits = ref<Commit[]>([
 ]);
 
 const selectedCommit = ref<Commit>();
-const sidebarWidth = ref(256);
-const detailsWidth = ref(384);
+const sidebarWidth = ref(200);
+const detailsWidth = ref(400);
 
 const handleSelectCommit = (commit: Commit) => {
   selectedCommit.value = commit;
