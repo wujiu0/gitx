@@ -1,10 +1,21 @@
 import * as vscode from 'vscode';
+import { GitService } from '../git/git.js';
 import { getUri } from '../utils/index.js';
 
 export class GitXViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'gitx.view';
+  private gitService?: GitService;
 
-  constructor(private readonly ctx: vscode.ExtensionContext) {}
+  constructor(private readonly ctx: vscode.ExtensionContext) {
+    this.initGitService();
+  }
+
+  private initGitService() {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (workspaceFolders && workspaceFolders.length > 0) {
+      this.gitService = new GitService(workspaceFolders[0].uri.fsPath);
+    }
+  }
 
   public resolveWebviewView(webviewView: vscode.WebviewView) {
     const webview = webviewView.webview;
@@ -16,8 +27,43 @@ export class GitXViewProvider implements vscode.WebviewViewProvider {
 
     webview.html = getWebviewContent(this.ctx, webview);
 
-    webview.onDidReceiveMessage((msg) => {
+    webview.onDidReceiveMessage(async (msg) => {
+      if (!this.gitService) {
+        this.initGitService();
+      }
+
+      if (!this.gitService) {
+        return;
+      }
+
       switch (msg.command) {
+        case 'getLog': {
+          try {
+            const log = await this.gitService.getLog();
+            webview.postMessage({ command: 'logData', data: log });
+          } catch (err) {
+            vscode.window.showErrorMessage(`Failed to get log: ${err}`);
+          }
+          break;
+        }
+        case 'getBranches': {
+          try {
+            const branches = await this.gitService.getBranches();
+            webview.postMessage({ command: 'branchesData', data: branches });
+          } catch (err) {
+            vscode.window.showErrorMessage(`Failed to get branches: ${err}`);
+          }
+          break;
+        }
+        case 'getCommitFiles': {
+          try {
+            const files = await this.gitService.getCommitFiles(msg.hash);
+            webview.postMessage({ command: 'commitFilesData', hash: msg.hash, data: files });
+          } catch (err) {
+            vscode.window.showErrorMessage(`Failed to get commit files: ${err}`);
+          }
+          break;
+        }
         case 'alert':
           vscode.window.showInformationMessage(msg.text);
           return;
