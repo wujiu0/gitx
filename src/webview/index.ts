@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { type GitService } from '../core/gitService.js';
-import { getUri, logger } from '../utils/index.js';
+import { getUri } from '../utils/index.js';
 
 export class GitXViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'gitx.view';
@@ -21,10 +21,7 @@ export class GitXViewProvider implements vscode.WebviewViewProvider {
     webview.html = getWebviewContent(this.ctx, webview);
 
     webview.onDidReceiveMessage(async (msg) => {
-      if (!this.gitService) {
-        logger.error('Unable to get gitService');
-        return;
-      }
+      // The constructor requires gitService, so this runtime null-check is likely redundant and suggests gitService can be absent.
 
       switch (msg.command) {
         // case 'getLog': {

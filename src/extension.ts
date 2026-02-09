@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
 import { createGitService } from './core/gitService.js';
+import { logger } from './utils/outputChannel.js';
 import { GitXViewProvider } from './webview/index.js';
 
 export async function activate(context: vscode.ExtensionContext) {
+  logger.setDevModeEnabled(context.extensionMode === vscode.ExtensionMode.Development);
   const gitService = await createGitService();
 
   const hello = vscode.commands.registerCommand('gitx.helloWorld', () => {

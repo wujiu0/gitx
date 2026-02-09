@@ -12,6 +12,7 @@ export const vscodeConfiguration = (): WorkspaceConfiguration => {
 };
 
 export const getWorkspaceFolder = () => {
+  // TODO: support multi-root workspace
   return workspace.workspaceFolders?.[0].uri.fsPath;
 };
 
