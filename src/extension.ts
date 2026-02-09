@@ -1,7 +1,9 @@
 import * as vscode from 'vscode';
+import { createGitService } from './core/gitService.js';
 import { GitXViewProvider } from './webview/index.js';
-export function activate(context: vscode.ExtensionContext) {
-  console.log('[gitx] "gitx" is active!');
+
+export async function activate(context: vscode.ExtensionContext) {
+  const gitService = await createGitService();
 
   const hello = vscode.commands.registerCommand('gitx.helloWorld', () => {
     vscode.window.showInformationMessage('Hello World from gitx!');
@@ -13,7 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   const providerRegistration = vscode.window.registerWebviewViewProvider(
     GitXViewProvider.viewType,
-    new GitXViewProvider(context),
+    new GitXViewProvider(context, gitService),
   );
 
   // Status bar item to open the GitX panel
