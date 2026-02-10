@@ -17,14 +17,14 @@ class Logger {
   }
 
   info(msg: string, ...args: any[]): void {
-    this._outputChannel.info(`${msg}`);
+    this._outputChannel.info(`${msg}`, ...args);
     if (this._devModeEnabled) {
       console.log(`[gitx] ${msg}`, ...args);
     }
   }
 
   error(msg: string, ...args: any[]): void {
-    this._outputChannel.error(msg);
+    this._outputChannel.error(msg, ...args);
     if (this._devModeEnabled) {
       console.error(`[gitx] ${msg}`, ...args);
     }
