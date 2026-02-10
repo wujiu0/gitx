@@ -21,8 +21,6 @@ export class GitXViewProvider implements vscode.WebviewViewProvider {
     webview.html = getWebviewContent(this.ctx, webview);
 
     webview.onDidReceiveMessage(async (msg) => {
-      // The constructor requires gitService, so this runtime null-check is likely redundant and suggests gitService can be absent.
-
       switch (msg.command) {
         // case 'getLog': {
         //   try {
