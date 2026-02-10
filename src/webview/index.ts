@@ -1,10 +1,14 @@
 import * as vscode from 'vscode';
+import { type GitService } from '../core/gitService.js';
 import { getUri } from '../utils/index.js';
 
 export class GitXViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'gitx.view';
 
-  constructor(private readonly ctx: vscode.ExtensionContext) {}
+  constructor(
+    private readonly ctx: vscode.ExtensionContext,
+    private readonly gitService: GitService,
+  ) {}
 
   public resolveWebviewView(webviewView: vscode.WebviewView) {
     const webview = webviewView.webview;
@@ -16,8 +20,35 @@ export class GitXViewProvider implements vscode.WebviewViewProvider {
 
     webview.html = getWebviewContent(this.ctx, webview);
 
-    webview.onDidReceiveMessage((msg) => {
+    webview.onDidReceiveMessage(async (msg) => {
       switch (msg.command) {
+        // case 'getLog': {
+        //   try {
+        //     const log = await this.gitService.getLog();
+        //     webview.postMessage({ command: 'logData', data: log });
+        //   } catch (err) {
+        //     vscode.window.showErrorMessage(`Failed to get log: ${err}`);
+        //   }
+        //   break;
+        // }
+        // case 'getBranches': {
+        //   try {
+        //     const branches = await this.gitService.getBranches();
+        //     webview.postMessage({ command: 'branchesData', data: branches });
+        //   } catch (err) {
+        //     vscode.window.showErrorMessage(`Failed to get branches: ${err}`);
+        //   }
+        //   break;
+        // }
+        // case 'getCommitFiles': {
+        //   try {
+        //     const files = await this.gitService.getCommitFiles(msg.hash);
+        //     webview.postMessage({ command: 'commitFilesData', hash: msg.hash, data: files });
+        //   } catch (err) {
+        //     vscode.window.showErrorMessage(`Failed to get commit files: ${err}`);
+        //   }
+        //   break;
+        // }
         case 'alert':
           vscode.window.showInformationMessage(msg.text);
           return;
