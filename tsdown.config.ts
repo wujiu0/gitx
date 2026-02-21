@@ -7,7 +7,7 @@ export default defineConfig({
   platform: 'node',
   target: 'es2022',
   fixedExtension: false,
-  sourcemap: true,
+  sourcemap: false,
   clean: true,
   external: ['vscode'],
 });
