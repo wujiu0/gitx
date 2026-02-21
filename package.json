@@ -12,6 +12,10 @@
   ],
   "activationEvents": [],
   "main": "./out/extension.js",
+  "files": [
+    "out",
+    "src/webview/build/**/*"
+  ],
   "contributes": {
     "commands": [
       {
@@ -52,6 +56,7 @@
     "compile": "tsdown",
     "watch": "tsdown --watch",
     "typecheck": "tsc -p ./ --noEmit",
+    "package": "vsce package",
     "pretest": "pnpm run compile && pnpm run lint",
     "lint": "eslint src",
     "test": "vscode-test"
