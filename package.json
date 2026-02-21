@@ -49,8 +49,9 @@
   },
   "scripts": {
     "vscode:prepublish": "pnpm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "compile": "tsdown",
+    "watch": "tsdown --watch",
+    "typecheck": "tsc -p ./ --noEmit",
     "pretest": "pnpm run compile && pnpm run lint",
     "lint": "eslint src",
     "test": "vscode-test"
@@ -67,6 +68,7 @@
     "eslint": "^9.39.1",
     "prettier": "^3.7.4",
     "prettier-plugin-tailwindcss": "^0.7.2",
+    "tsdown": "^0.20.3",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.48.1"
   }
