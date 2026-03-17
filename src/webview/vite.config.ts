@@ -7,7 +7,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   plugins: [vue(), /* vueDevTools(),*/ tailwindcss()],
   server: {
-    cors: true
+    cors: true,
   },
   build: {
     outDir: 'build',
@@ -15,8 +15,8 @@ export default defineConfig({
       output: {
         entryFileNames: 'assets/[name].js',
         chunkFileNames: 'assets/[name].js',
-        assetFileNames: 'assets/[name].[ext]'
-      }
-    }
-  }
+        assetFileNames: 'assets/[name].[ext]',
+      },
+    },
+  },
 });

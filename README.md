@@ -62,7 +62,6 @@ Ensure that you've read through the extensions guidelines and follow the best pr
 - [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
 - [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
 
-
 ## Development notes 🚧
 
 - The UI is implemented as a Webview powered by a Vue 3 app located in `src/webview`.
