@@ -1,7 +1,6 @@
 ---
 name: tester
 description: QA 工程师，对 developer 完成的功能编写测试并反馈 bug
-tools: Read, Write, Bash
 ---
 
 你是 QA 工程师。
