@@ -2,6 +2,9 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import type { Commit } from '../../types.ts';
 import { computeGraphLayout } from '../../utils/graphLayout.ts';
+import ContextMenu from '../public/ContextMenu.vue';
+import type { ContextMenuItem } from '../public/ContextMenu.vue';
+import XIcon from '../public/XIcon.vue';
 
 const ROW_HEIGHT = 24;
 const OVERSCAN = 10;
@@ -16,11 +19,62 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'selectCommit', commit: Commit): void;
   (e: 'loadMore'): void;
+  (e: 'createBranch', name: string, from: string): void;
+  (e: 'createTag', name: string, hash: string): void;
 }>();
 
 const containerRef = ref<HTMLElement | null>(null);
 const scrollTop = ref(0);
 const viewportHeight = ref(400);
+
+// Context menu state
+const contextMenuVisible = ref(false);
+const contextMenuX = ref(0);
+const contextMenuY = ref(0);
+const contextMenuCommit = ref<Commit | null>(null);
+
+const contextMenuItems = computed<ContextMenuItem[]>(() => [
+  { label: 'Copy Hash' },
+  { label: 'Copy Message' },
+  { separator: true, label: '' },
+  { label: 'Create Branch from Here...' },
+  { label: 'Create Tag...' },
+]);
+
+function onRowContextMenu(event: MouseEvent, commit: Commit) {
+  contextMenuCommit.value = commit;
+  contextMenuX.value = event.clientX;
+  contextMenuY.value = event.clientY;
+  contextMenuVisible.value = true;
+}
+
+async function onContextMenuSelect(item: ContextMenuItem) {
+  const commit = contextMenuCommit.value;
+  if (!commit) return;
+
+  switch (item.label) {
+    case 'Copy Hash':
+      await navigator.clipboard.writeText(commit.hash);
+      break;
+    case 'Copy Message':
+      await navigator.clipboard.writeText(commit.message);
+      break;
+    case 'Create Branch from Here...': {
+      const name = prompt('Enter new branch name:');
+      if (name && name.trim()) {
+        emit('createBranch', name.trim(), commit.hash);
+      }
+      break;
+    }
+    case 'Create Tag...': {
+      const tagName = prompt('Enter tag name:');
+      if (tagName && tagName.trim()) {
+        emit('createTag', tagName.trim(), commit.hash);
+      }
+      break;
+    }
+  }
+}
 
 const graphNodes = computed(() => computeGraphLayout(props.commits));
 
@@ -87,10 +141,35 @@ onMounted(() => {
 });
 
 onUnmounted(() => resizeObserver?.disconnect());
+
+interface ParsedRef {
+  type: 'head' | 'branch' | 'remote' | 'tag';
+  label: string;
+}
+
+function parseRefs(refs: string): ParsedRef[] {
+  if (!refs) return [];
+  const result: ParsedRef[] = [];
+  for (const raw of refs.split(',').map((r) => r.trim()).filter(Boolean)) {
+    if (raw.startsWith('HEAD -> ')) {
+      result.push({ type: 'head', label: 'HEAD' });
+      result.push({ type: 'branch', label: raw.slice('HEAD -> '.length).replace('refs/heads/', '') });
+    } else if (raw === 'HEAD') {
+      result.push({ type: 'head', label: 'HEAD' });
+    } else if (raw.startsWith('tag: ')) {
+      result.push({ type: 'tag', label: raw.slice('tag: '.length) });
+    } else if (raw.startsWith('refs/remotes/') || raw.startsWith('origin/') || raw.startsWith('remotes/')) {
+      result.push({ type: 'remote', label: raw.replace('refs/remotes/', '') });
+    } else {
+      result.push({ type: 'branch', label: raw.replace('refs/heads/', '') });
+    }
+  }
+  return result;
+}
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col overflow-hidden bg-(--vscode-editor-background)">
+  <div class="flex h-full flex-col overflow-hidden bg-(--vscode-editor-background)">
     <!-- Skeleton loading -->
     <div v-if="isLoading && commits.length === 0" class="flex flex-col">
       <div v-for="i in 20" :key="i" class="flex items-center border-b border-(--vscode-panel-border)/20 px-2" style="height: 24px">
@@ -111,6 +190,7 @@ onUnmounted(() => resizeObserver?.disconnect());
               v-for="{ commit, graph, index } in visibleCommits"
               :key="commit.hash"
               @click="emit('selectCommit', commit)"
+              @contextmenu.prevent="onRowContextMenu($event, commit)"
               :class="[
                 'group vscode-list-item border-b border-(--vscode-panel-border)/30',
                 selectedCommitHash === commit.hash ? 'vscode-list-item-active' : '',
@@ -130,7 +210,7 @@ onUnmounted(() => resizeObserver?.disconnect());
                     :y1="0"
                     :x2="col * 16 + 8"
                     :y2="ROW_HEIGHT"
-                    :stroke="'#4fc1ff'"
+                    :stroke="graph.color"
                     stroke-width="1.5"
                     stroke-opacity="0.4"
                   />
@@ -160,16 +240,20 @@ onUnmounted(() => resizeObserver?.disconnect());
                 <span class="font-medium">{{ commit.message }}</span>
                 <!-- Refs (branch/tag labels) -->
                 <template v-if="commit.refs">
-                  <span
-                    v-for="ref in commit.refs.split(',').map(r => r.trim()).filter(Boolean)"
-                    :key="ref"
-                    :class="[
-                      'ml-1 inline-block rounded px-1 font-mono text-[9px]',
-                      ref.startsWith('HEAD') ? 'bg-yellow-500/20 text-yellow-300' :
-                      ref.startsWith('tag:') ? 'bg-purple-500/20 text-purple-300' :
-                      'bg-blue-500/20 text-blue-300'
-                    ]"
-                  >{{ ref }}</span>
+                  <template v-for="ref in parseRefs(commit.refs)" :key="ref.type + ref.label">
+                    <span v-if="ref.type === 'head'" class="ml-1 inline-flex items-center rounded px-1 font-mono text-[9px] bg-yellow-500/30 text-yellow-300">
+                      HEAD
+                    </span>
+                    <span v-else-if="ref.type === 'branch'" class="ml-1 inline-flex items-center gap-0.5 rounded px-1 font-mono text-[9px] bg-blue-500/20 text-blue-300">
+                      <XIcon name="expand" size="9" />{{ ref.label }}
+                    </span>
+                    <span v-else-if="ref.type === 'remote'" class="ml-1 inline-flex items-center gap-0.5 rounded px-1 font-mono text-[9px] bg-white/10 text-white/40">
+                      {{ ref.label }}
+                    </span>
+                    <span v-else-if="ref.type === 'tag'" class="ml-1 inline-flex items-center gap-0.5 rounded px-1 font-mono text-[9px] bg-purple-500/20 text-purple-300">
+                      <XIcon name="tag" size="9" />{{ ref.label }}
+                    </span>
+                  </template>
                 </template>
               </td>
               <!-- Author -->
@@ -189,6 +273,16 @@ onUnmounted(() => resizeObserver?.disconnect());
         Loading more...
       </div>
     </div>
+
+    <!-- Context Menu -->
+    <ContextMenu
+      :items="contextMenuItems"
+      :visible="contextMenuVisible"
+      :x="contextMenuX"
+      :y="contextMenuY"
+      @select="onContextMenuSelect"
+      @close="contextMenuVisible = false"
+    />
   </div>
 </template>
 

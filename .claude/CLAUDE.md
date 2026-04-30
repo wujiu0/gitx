@@ -148,7 +148,19 @@ leader 派发任务
 
 ---
 
-## 六、新项目接入 Checklist
+## 六、启动 Claude Code 的命令
+
+在 tmux pane 中启动 Claude Code 时，**必须使用 `cc` 命令**，不得使用 `claude`：
+
+```bash
+tmux send-keys -t wj:<PROJECT_WINDOW>.<N> 'cc' Enter
+```
+
+`cc` 是全局别名，内含必要的启动参数。
+
+---
+
+## 七、新项目接入 Checklist
 
 在新项目中启用此工作流时，leader（pane0）负责完成以下初始化：
 
@@ -159,7 +171,7 @@ leader 派发任务
 
 ---
 
-## 七、各角色速查
+## 八、各角色速查
 
 ### pane0 · Team Lead
 

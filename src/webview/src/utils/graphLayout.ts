@@ -1,12 +1,12 @@
 import type { Commit, CommitGraphNode, GraphEdge } from '../types.ts';
 
 const GRAPH_COLORS = [
-  '#4fc1ff', // blue
-  '#ff9d5c', // orange
-  '#73c991', // green
-  '#c586c0', // purple
-  '#f44747', // red
-  '#dcdcaa', // yellow
+  'var(--gitx-graph-0)',
+  'var(--gitx-graph-1)',
+  'var(--gitx-graph-2)',
+  'var(--gitx-graph-3)',
+  'var(--gitx-graph-4)',
+  'var(--gitx-graph-5)',
 ];
 
 function colorFor(col: number): string {

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import BranchView from './components/BranchView/BranchView.vue';
 import DetailView from './components/DetailView/DetailView.vue';
 import LogView from './components/LogView/LogView.vue';
@@ -31,6 +31,8 @@ const handleDetailsResize = (clientX: number) => {
     detailsWidth.value = width;
   }
 };
+
+const uniqueAuthors = computed(() => [...new Set(store.commits.value.map((c) => c.author))]);
 </script>
 
 <template>
@@ -59,6 +61,7 @@ const handleDetailsResize = (clientX: number) => {
           @createBranch="(name, from) => store.createBranch(name, from)"
           @mergeBranch="store.mergeBranch"
           @pushBranch="store.pushBranch"
+          @renameBranch="(old, newName) => store.renameBranch(old, newName)"
         />
       </XContainer>
       <XResizer @resize="handleSidebarResize" />
@@ -67,6 +70,7 @@ const handleDetailsResize = (clientX: number) => {
         <template #header>
           <XToolbar
             :is-fetching="store.isFetching.value"
+            :authors="uniqueAuthors"
             @refresh="store.refresh()"
             @fetch="store.fetchAll()"
             @filter="store.applyFilters"
@@ -79,6 +83,8 @@ const handleDetailsResize = (clientX: number) => {
           :has-more="store.hasMore.value"
           @selectCommit="(c) => store.selectCommit(c.hash)"
           @loadMore="store.loadMore()"
+          @createBranch="(name, from) => store.createBranch(name, from)"
+          @createTag="(name, hash) => store.createTag(name, hash)"
         />
       </XContainer>
       <XResizer @resize="handleDetailsResize" />
@@ -103,5 +109,11 @@ const handleDetailsResize = (clientX: number) => {
 <style>
 :root {
   --vscode-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --gitx-graph-0: #4fc1ff;
+  --gitx-graph-1: #a8cc8c;
+  --gitx-graph-2: #e8a87c;
+  --gitx-graph-3: #c586c0;
+  --gitx-graph-4: #f48771;
+  --gitx-graph-5: #9cdcfe;
 }
 </style>
