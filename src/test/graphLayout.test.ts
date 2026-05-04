@@ -2,6 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { computeGraphLayout } from '../webview/src/utils/graphLayout.js';
 import type { Commit } from '../types.js';
 
+// mirrors the private constant in graphLayout.ts
+const GRAPH_COLORS = [
+  'var(--gitx-graph-0)',
+  'var(--gitx-graph-1)',
+  'var(--gitx-graph-2)',
+  'var(--gitx-graph-3)',
+  'var(--gitx-graph-4)',
+  'var(--gitx-graph-5)',
+];
+
 function c(hash: string, parents: string[]): Commit {
   return { hash, parents, refs: '', message: '', author: '', authorEmail: '', date: '' };
 }
@@ -41,7 +51,8 @@ describe('computeGraphLayout', () => {
     expect(edges).toContainEqual({ fromCol: 0, toCol: 1, type: 'fork' });
   });
 
-  it('merge: when parent already has a lane, produces a merge edge', () => {
+  // Issue 1: multi-lane color assertions using GRAPH_COLORS
+  it('merge: when parent already has a lane, produces a merge edge; node colors match GRAPH_COLORS[col]', () => {
     // M branches to B (lane 0) and C (lane 1)
     // Then C points to D which is already in laneMap on lane 0
     const commits = [
@@ -51,9 +62,27 @@ describe('computeGraphLayout', () => {
       c('D', []),
     ];
     const result = computeGraphLayout(commits);
+
     // C is on lane 1, D is on lane 0 — C should emit a merge edge
     const cNode = result.find((n) => n.hash === 'C')!;
     expect(cNode.edges).toContainEqual({ fromCol: 1, toCol: 0, type: 'merge' });
+
+    // Verify node colors match GRAPH_COLORS[column]
+    const mNode = result.find((n) => n.hash === 'M')!;
+    const bNode = result.find((n) => n.hash === 'B')!;
+    const dNode = result.find((n) => n.hash === 'D')!;
+
+    expect(mNode.column).toBe(0);
+    expect(mNode.color).toBe(GRAPH_COLORS[0]);
+
+    expect(bNode.column).toBe(0);
+    expect(bNode.color).toBe(GRAPH_COLORS[0]);
+
+    expect(cNode.column).toBe(1);
+    expect(cNode.color).toBe(GRAPH_COLORS[1]);
+
+    expect(dNode.column).toBe(0);
+    expect(dNode.color).toBe(GRAPH_COLORS[0]);
   });
 
   it('color for column 0 is the first graph color variable', () => {
@@ -104,6 +133,39 @@ describe('computeGraphLayout', () => {
     }
     // Specifically the 7th should still be col 0, cycling back to graph-0
     expect(r[6]!.color).toBe('var(--gitx-graph-0)');
+  });
+
+  // Issue 2: direct color cycling test with 7 independent single-parent commits on different lanes
+  it('color at column 6 wraps to GRAPH_COLORS[0] (6 % 6 === 0) — 7 single-parent chains on distinct lanes', () => {
+    // M forks into 7 branches A0-A6, each being a single-parent chain pointing to root.
+    // A0 stays on lane 0 (first parent of M); A1-A6 get lanes 1-6 (fork).
+    // Each Ax has exactly one parent ('root'), so they are single-parent chain commits.
+    // A6 is on lane 6 — colorFor(6) === GRAPH_COLORS[6 % 6] === GRAPH_COLORS[0].
+    const commits = [
+      c('M',    ['A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6']),
+      c('A0',   ['root']),
+      c('A1',   ['root']),
+      c('A2',   ['root']),
+      c('A3',   ['root']),
+      c('A4',   ['root']),
+      c('A5',   ['root']),
+      c('A6',   ['root']),
+      c('root', []),
+    ];
+    const result = computeGraphLayout(commits);
+
+    const a6Node = result.find((n) => n.hash === 'A6')!;
+    expect(a6Node.column).toBe(6);
+    expect(a6Node.color).toBe(GRAPH_COLORS[6 % GRAPH_COLORS.length]);
+    expect(a6Node.color).toBe(GRAPH_COLORS[0]);
+
+    // Sanity-check that earlier lanes have the expected colors
+    const a0Node = result.find((n) => n.hash === 'A0')!;
+    const a1Node = result.find((n) => n.hash === 'A1')!;
+    const a5Node = result.find((n) => n.hash === 'A5')!;
+    expect(a0Node.color).toBe(GRAPH_COLORS[0]); // col 0
+    expect(a1Node.color).toBe(GRAPH_COLORS[1]); // col 1
+    expect(a5Node.color).toBe(GRAPH_COLORS[5]); // col 5
   });
 
   it('passThrough contains all active lanes except the current commit column', () => {

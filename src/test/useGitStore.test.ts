@@ -7,7 +7,7 @@ vi.mock('../webview/src/composables/useGitBridge.js', () => ({
 
 import { request } from '../webview/src/composables/useGitBridge.js';
 import { useGitStore } from '../webview/src/composables/useGitStore.js';
-import type { Commit, CommitDetail, RepoInfo } from '../types.js';
+import type { Commit, CommitDetail } from '../types.js';
 
 const mockRequest = vi.mocked(request);
 
@@ -20,11 +20,16 @@ function makeDetail(hash: string): CommitDetail {
 }
 
 describe('useGitStore', () => {
+  // Issue 4-①: reset all shared state including repos/branches/tags/stashes
   beforeEach(() => {
     vi.clearAllMocks();
     const store = useGitStore();
     store.activeRepoPath.value = '/test/repo';
+    store.repos.value = [];
     store.commits.value = [];
+    store.branches.value = [];
+    store.tags.value = [];
+    store.stashes.value = [];
     store.hasMore.value = false;
     store.selectedCommit.value = null;
     store.isLoading.value = false;
@@ -113,15 +118,22 @@ describe('useGitStore', () => {
     expect(store.error.value).toContain('not found');
   });
 
-  it('loadMore appends commits when hasMore is true and not loading', async () => {
-    mockRequest.mockResolvedValueOnce({ commits: [makeCommit('m1')], hasMore: false });
+  // Issue 3: loadMore with commit count assertion
+  it('loadMore appends commits — N existing + M new = N+M total', async () => {
+    const existing = [makeCommit('e1'), makeCommit('e2')];
+    const newCommits = [makeCommit('m1'), makeCommit('m2'), makeCommit('m3')];
+    mockRequest.mockResolvedValueOnce({ commits: newCommits, hasMore: false });
 
     const store = useGitStore();
     store.hasMore.value = true;
+    store.commits.value = [...existing];
 
     await store.loadMore();
 
-    expect(mockRequest).toHaveBeenCalledWith('git.log', expect.objectContaining({ offset: 0 }));
+    expect(mockRequest).toHaveBeenCalledWith('git.log', expect.objectContaining({ offset: existing.length }));
+    expect(store.commits.value).toHaveLength(existing.length + newCommits.length);
+    expect(store.commits.value).toEqual([...existing, ...newCommits]);
+    expect(store.hasMore.value).toBe(false);
   });
 
   it('loadMore does nothing when hasMore is false', async () => {
@@ -164,5 +176,55 @@ describe('useGitStore', () => {
     expect(opts['since']).toBeUndefined();
     expect(opts['until']).toBeUndefined();
     expect(opts['branch']).toBeUndefined();
+  });
+
+  // Issue 4-②: loadBranches test
+  it('loadBranches fetches git.branches and updates branches/tags/stashes', async () => {
+    const fakeBranches = [{ name: 'main', type: 'local' as const, current: true }];
+    const fakeTags = [{ name: 'v1.0.0', hash: 'abc123' }];
+    const fakeStashes = [{ index: 0, message: 'WIP on main', hash: 'def456', date: '2024-01-01' }];
+    mockRequest.mockResolvedValueOnce({ branches: fakeBranches, tags: fakeTags, stashes: fakeStashes });
+
+    const store = useGitStore();
+    await store.loadBranches();
+
+    expect(mockRequest).toHaveBeenCalledWith('git.branches');
+    expect(store.branches.value).toEqual(fakeBranches);
+    expect(store.tags.value).toEqual(fakeTags);
+    expect(store.stashes.value).toEqual(fakeStashes);
+  });
+
+  // Issue 4-③: checkoutBranch test
+  it('checkoutBranch sends git.checkout with the branch name', async () => {
+    // checkout → refresh → loadBranches + loadLog
+    mockRequest
+      .mockResolvedValueOnce(undefined) // git.checkout
+      .mockResolvedValueOnce({ branches: [], tags: [], stashes: [] }) // git.branches
+      .mockResolvedValueOnce({ commits: [], hasMore: false }); // git.log
+
+    const store = useGitStore();
+    await store.checkoutBranch('feature/new');
+
+    expect(mockRequest).toHaveBeenCalledWith('git.checkout', { name: 'feature/new' });
+  });
+
+  // Issue 4-④: fetchAll test
+  it('fetchAll sets isFetching to true during fetch and false after completion', async () => {
+    mockRequest
+      .mockResolvedValueOnce(undefined) // git.fetch
+      .mockResolvedValueOnce({ branches: [], tags: [], stashes: [] }) // git.branches (refresh)
+      .mockResolvedValueOnce({ commits: [], hasMore: false }); // git.log (refresh)
+
+    const store = useGitStore();
+    expect(store.isFetching.value).toBe(false);
+
+    const fetchPromise = store.fetchAll();
+    // isFetching is set synchronously before the first await
+    expect(store.isFetching.value).toBe(true);
+
+    await fetchPromise;
+
+    expect(store.isFetching.value).toBe(false);
+    expect(mockRequest).toHaveBeenCalledWith('git.fetch');
   });
 });
