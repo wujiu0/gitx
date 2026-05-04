@@ -1,10 +1,9 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
-import type { GitExtension, API as CodeGitAPI } from '../typings/git.js';
+import type { Branch, Commit, CommitDetail, LogOptions, RepoInfo, Stash, Tag } from '../types.js';
+import type { API as CodeGitAPI, GitExtension } from '../typings/git.js';
 import { execAsync } from '../utils/global.js';
 import { logger } from '../utils/outputChannel.js';
-import type { Branch, CommitDetail, LogOptions, RepoInfo, Stash, Tag } from '../types.js';
-import type { Commit } from '../types.js';
 import { parseBranches, parseCommitDetail, parseLog, parseStashList } from './gitParser.js';
 
 export const UNABLE_TO_FIND_GIT_MSG =
@@ -67,7 +66,7 @@ export async function createGitService(): Promise<GitService> {
       const { stdout } = await execAsync(`"${executable}" ${args}`, { cwd: workingDir });
       return stdout.trim();
     } catch (error) {
-      logger.error(`Git command failed: ${executable} ${args}`);
+      logger.error(`Git command failed: ${executable} ${args}`, error);
       throw error;
     }
   }
@@ -90,11 +89,21 @@ export async function createGitService(): Promise<GitService> {
       `--skip ${offset}`,
     ];
 
-    if (opts.search) { args.push(`--grep=${opts.search}`); }
-    if (opts.author) { args.push(`--author=${opts.author}`); }
-    if (opts.since) { args.push(`--after=${opts.since}`); }
-    if (opts.until) { args.push(`--before=${opts.until}`); }
-    if (opts.branch) { args.push(opts.branch); }
+    if (opts.search) {
+      args.push(`--grep=${opts.search}`);
+    }
+    if (opts.author) {
+      args.push(`--author=${opts.author}`);
+    }
+    if (opts.since) {
+      args.push(`--after=${opts.since}`);
+    }
+    if (opts.until) {
+      args.push(`--before=${opts.until}`);
+    }
+    if (opts.branch) {
+      args.push(opts.branch);
+    }
 
     const raw = await execute(args.join(' '), repoPath);
     const all = parseLog(raw);
@@ -102,12 +111,10 @@ export async function createGitService(): Promise<GitService> {
     return { commits: hasMore ? all.slice(0, -1) : all, hasMore };
   }
 
-  async function getBranches(
-    repoPath: string,
-  ): Promise<{ branches: Branch[]; tags: Tag[]; stashes: Stash[] }> {
+  async function getBranches(repoPath: string): Promise<{ branches: Branch[]; tags: Tag[]; stashes: Stash[] }> {
     const [refRaw, stashRaw] = await Promise.all([
       execute(
-        `for-each-ref --format=%(refname)%x00%(objectname:short)%x00%(HEAD)%x00%(upstream:short)%x00%(upstream:track) refs/heads refs/remotes refs/tags`,
+        `for-each-ref --format='%(refname)%00%(objectname:short)%00%(HEAD)%00%(upstream:short)%00%(upstream:track)' refs/heads refs/remotes refs/tags`,
         repoPath,
       ),
       execute(`stash list --format=%gd%x00%s%x00%H%x00%ai`, repoPath).catch(() => ''),
