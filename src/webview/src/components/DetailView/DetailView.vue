@@ -1,12 +1,16 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
-import type { Commit } from '../../types.ts';
+import type { CommitDetail, FileChange } from '../../types.ts';
 import XResizer from '../public/XResizer.vue';
 import CommitFileList from './CommitFileList.vue';
 import CommitInfo from './CommitInfo.vue';
 
 defineProps<{
-  commit?: Commit;
+  commit?: CommitDetail | null;
+}>();
+
+const emit = defineEmits<{
+  (e: 'openDiff', file: FileChange, commit: CommitDetail): void;
 }>();
 
 const fileListHeight = ref<number | null>(null);
@@ -25,18 +29,16 @@ const handleFileListResize = (clientY: number) => {
 <template>
   <div ref="containerRef" class="flex h-full shrink-0 flex-col overflow-hidden bg-(--vscode-sideBar-background)">
     <div v-if="commit" class="flex flex-1 flex-col overflow-hidden">
-      <!-- File List Section (Top) -->
       <div
         :class="fileListHeight === null ? 'flex-1' : 'shrink-0'"
         class="min-h-0 overflow-hidden"
         :style="fileListHeight !== null ? { height: fileListHeight + 'px' } : {}"
       >
-        <CommitFileList :commit="commit" />
+        <CommitFileList :commit="commit" @openDiff="(file) => emit('openDiff', file, commit!)" />
       </div>
 
       <XResizer orientation="vertical" @resize="handleFileListResize" />
 
-      <!-- Commit Info -->
       <CommitInfo :commit="commit" />
     </div>
     <div v-else class="flex flex-1 items-center justify-center text-xs italic opacity-40">

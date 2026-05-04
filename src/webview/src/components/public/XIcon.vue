@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 const props = defineProps<{
-  name: 'diff' | 'expand' | 'settings' | 'refresh' | 'search' | 'file' | 'check' | 'close';
+  name: 'diff' | 'expand' | 'settings' | 'refresh' | 'search' | 'file' | 'check' | 'close' | 'fetch' | 'tag' | 'stash' | 'merge' | 'push' | 'copy';
   size?: number | string;
 }>();
 
@@ -37,6 +37,62 @@ const iconSize = props.size || 16;
     <path
       v-if="name === 'close'"
       d="M1.293 1.293a1 1 0 0 1 1.414 0L8 6.586l5.293-5.293a1 1 0 1 1 1.414 1.414L9.414 8l5.293 5.293a1 1 0 0 1-1.414 1.414L8 9.414l-5.293 5.293a1 1 0 0 1-1.414-1.414L6.586 8 1.293 2.707a1 1 0 0 1 0-1.414z"
+    />
+    <!-- fetch: bar at top + arrow pointing down -->
+    <path
+      v-if="name === 'fetch'"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M2 4h12M8 6v8M5 11l3 3 3-3"
+    />
+    <!-- tag: filled label/tag shape with hole -->
+    <path
+      v-if="name === 'tag'"
+      fill-rule="evenodd"
+      d="M2 1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 1 6.586V2a1 1 0 0 1 1-1zm4.5 3a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0z"
+    />
+    <!-- stash: archive box shape -->
+    <path
+      v-if="name === 'stash'"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M1 1h14v3H1V1zM2 4h12v9H2V4zM6 8h4"
+    />
+    <!-- merge: Y-shape two branches converging -->
+    <path
+      v-if="name === 'merge'"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M3 2v4l5 3 5-3V2M8 9v5"
+    />
+    <!-- push: arrow pointing up + bar at bottom -->
+    <path
+      v-if="name === 'push'"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M2 12h12M8 10V2M5 5l3-3 3 3"
+    />
+    <!-- copy: two overlapping documents -->
+    <path
+      v-if="name === 'copy'"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M5 3h7a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM3 5H2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-1"
     />
   </svg>
 </template>

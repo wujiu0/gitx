@@ -12,6 +12,10 @@
   ],
   "activationEvents": [],
   "main": "./out/extension.js",
+  "files": [
+    "out",
+    "src/webview/build/**/*"
+  ],
   "contributes": {
     "commands": [
       {
@@ -49,11 +53,15 @@
   },
   "scripts": {
     "vscode:prepublish": "pnpm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "compile": "tsdown",
+    "watch": "tsdown --watch",
+    "typecheck": "tsc -p ./ --noEmit",
+    "package": "vsce package",
     "pretest": "pnpm run compile && pnpm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest"
   },
   "extensionDependencies": [
     "vscode.git"
@@ -65,9 +73,10 @@
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
     "eslint": "^9.39.1",
-    "prettier": "^3.7.4",
-    "prettier-plugin-tailwindcss": "^0.7.2",
+    "oxfmt": "^0.41.0",
+    "tsdown": "^0.20.3",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.48.1"
+    "typescript-eslint": "^8.48.1",
+    "vitest": "^4.1.4"
   }
 }
